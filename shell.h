@@ -1,4 +1,4 @@
-#define INPUT_SIZE 128
+#define INPUT_SIZE 1024
+#define PATH_SIZE 1024
 
-int main(void);
-int input();
+enum err_code {no_such_cmd = -1};
