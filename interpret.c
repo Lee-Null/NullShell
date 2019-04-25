@@ -14,62 +14,77 @@ int env(char *cmd){
 
 }
 
-int pipeline(int *mod, char *tok){
+int separate(int *mod, char *cmd, char **separated_cmd, char *sep){
+    char *cache;
+    int count = 0;
+    cache = strtok(cmd, sep);
+    do
+        separated_cmd[count++] = cache;
+    while((cache = strtok(NULL, sep)) != NULL);
+    return count;
+}
+
+int escape(int *mod, char *tok){
     int kind = 0;
-    for(kind = 0; kind < PIPE_KIND; kind++){
-        if(strcmp(tok, pipes[*mod][kind]) == 0)
+    for(kind = 0; kind < ESCAPE_KIND; kind++){
+        if(strcmp(tok, escapes[*mod][kind]) == 0)
             break;
     }
-    if(kind == PIPE_KIND) return -1;
+    if(kind == ESCAPE_KIND) return -1;
 
     return kind;
 }
 
-int exec(char **cmd, int into, int from){
+int exec(char **cmd, int *fd){
     char *c; int i, pid, status = 0;
-    printf("exec stdin : %d, stdout : %d\n", from, into);
+    int in = fd[STDIN_FILENO], out = fd[STDOUT_FILENO];
+    // printf("exec stdin : %d, stdout : %d\n", in, out);
 
-        for(i = 0, c = cmd[i]; c != NULL; c = cmd[++i])
-            printf("%s ", c);
-        printf("\n");
+    // for(i = 0, c = cmd[i]; c != NULL; c = cmd[++i])
+    //     printf("%s ", c);
+    // printf("\n");
 
-    if((pid = fork()) == 0){
-        dup2(from, STDIN_FILENO); //stdin
-        dup2(into, STDOUT_FILENO); //stdout
+    pid = fork();
+
+    if(pid == -1){
+        fprintf(stderr, "Fork Error\n");
+        return -1;
+    }
+    else if(pid == 0){
+        dup2(in, STDIN_FILENO); //stdin
+        dup2(out, STDOUT_FILENO); //stdout
 
         execvp(cmd[0], cmd);
         execv(cmd[0], cmd);
-        printf("No such command\n");
-        exit(0);
+        fprintf(stderr, "No such command\n");
+        return -1;
     }
     else{
         waitpid(pid, &status, 0);
-        printf("after stdin : %d, stdout : %d\n", from, into);
-        if(into != STDOUT_FILENO)
-            close(into);
-        if(from != STDIN_FILENO)
-            close(from);
+        // printf("after stdin : %d, stdout : %d\n", from, into);
+        if(out != STDOUT_FILENO)
+            close(out);
+        if(in != STDIN_FILENO)
+            close(in);
     }
+    return 0;
 }
 
-int interpret(int *mod, char *cmds, char *dir){
-    char *tok[INPUT_SIZE/TOK_SIZE];
+int interpret(int *mod, char *cmds, char *dir, char **tok, int *fds){
     char *cache, *file;
-    int tok_count = 0, input_fd = 0, output_fd = 1;
-    int flag = -1;
+    int tok_count = 0, flag = -1;
 
-    printf("TOKKEN : ");
+    // printf("TOKKEN : ");
+    fds[STDIN_FILENO] = STDIN_FILENO;
+    fds[STDOUT_FILENO] = STDOUT_FILENO;
     cache = strtok(cmds, " ");
     while(cache != NULL){
-        switch (flag = pipeline(mod, cache)){
-            case then:
-                //pipelne in |
-                break;
+        switch (flag = escape(mod, cache)){
             case into:
                 file = strtok(NULL, " ");
                 if(file != NULL)
-                    output_fd = open(file, O_CREAT | O_RDWR | O_TRUNC, 0664);
-                if(file == NULL || output_fd < 0){
+                    fds[STDOUT_FILENO] = open(file, O_CREAT | O_RDWR | O_TRUNC, 0664);
+                if(file == NULL || fds[STDOUT_FILENO] < 0){
                     fprintf(stderr, "File cannot exist\n");
                     return -1;
                 }
@@ -77,20 +92,21 @@ int interpret(int *mod, char *cmds, char *dir){
             case from:
                 file = strtok(NULL, " ");
                 if(file != NULL)
-                    input_fd = open(file, O_RDONLY);
-                if(file == NULL || input_fd < 0){
+                    fds[STDIN_FILENO] = open(file, O_RDONLY);
+                if(file == NULL || fds[STDIN_FILENO] < 0){
                     fprintf(stderr, "File does not exist\n");
                     return -1;
                 }
                 break;
             case next:
                 tok[tok_count++] = NULL;
-                exec(tok, output_fd, input_fd);
-                input_fd = STDIN_FILENO; output_fd = STDOUT_FILENO; tok_count = 0;
-                break;
+                return tok_count;
+                // exec(tok, fds[STDOUT_FILENO] , fds[STDIN_FILENO]);
+                // input_fd = STDIN_FILENO; output_fd = STDOUT_FILENO; tok_count = 0;
             default:
                 break;
         }
+        // printf("TOK : %s Flag : %d\n", cache, flag);
         if(flag < 0)
             tok[tok_count++] = cache;
 
@@ -130,5 +146,6 @@ int interpret(int *mod, char *cmds, char *dir){
         
     } while((cache = strtok(NULL, " ")) != NULL);
     */
-    printf("TOKKEN COUNT : %d\n", tok_count);
+    // printf("TOKKEN COUNT : %d\n", tok_count);
+    return tok_count;
 }
