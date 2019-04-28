@@ -1,10 +1,13 @@
+#include <stdio.h>
+
 void ltrim(char *src, char *dst){
     int p = 0;
     while(*src == '\n' || *src == ' ' || *src == '\t') src++;
     while(*src != '\0'){
-        dst[p] = *src;
-        p++; src++;
+        dst[p++] = *src;
+        src++;
     }
+    dst[p] = '\0';
 }
 
 void rtrim(char *str){

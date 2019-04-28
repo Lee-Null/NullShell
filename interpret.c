@@ -16,11 +16,24 @@ int env(char *cmd){
 
 int separate(int *mod, char *cmd, char **separated_cmd, char *sep){
     char *cache;
-    int count = 0;
-    cache = strtok(cmd, sep);
-    do
-        separated_cmd[count++] = cache;
-    while((cache = strtok(NULL, sep)) != NULL);
+    int count = 0, len = 0;
+    if(*mod == basic){
+        cache = strtok(cmd, sep);
+        do
+            separated_cmd[count++] = cache;
+        while((cache = strtok(NULL, sep)) != NULL);
+    }
+    else{
+        separated_cmd[count++] = cmd;
+        cache = cmd; len = strlen(sep);
+        while ((cache = strstr(cache, sep)) != NULL){
+            if(*(cache - 1) == ' ' && *(cache + len) == ' '){
+                *(cache - 1) = '\0';
+                separated_cmd[count++] = cache + len;
+            }
+            cache = cache + len;
+        }
+    }
     return count;
 }
 

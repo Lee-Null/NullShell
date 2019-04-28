@@ -16,43 +16,44 @@ char dir[PATH_SIZE];
  * 
  * return : 0 if no error otherwise if error.
 */
-int input(){
+int input(int *mod){
     char cmd[INPUT_SIZE];
     char *nseparated[INPUT_SIZE/CMD_SIZE];
     char *cmdseparated[INPUT_SIZE/CMD_SIZE];
     char *interpreted[INPUT_SIZE/TOK_SIZE];
     int fd[2] = {0, 1};
     
-    int status = 1, ncount = 0, cmdcount = 0, tokcount = 0;
+    int status = 0, ncount = 0, cmdcount = 0, tokcount = 0;
     int i = 0, j = 0;
-    int mod = basic;
-    while(status){
-        ncount = 0; cmdcount = 0; tokcount = 0;
-        printf("%s with %s: ", dir, mod == basic ? "basic" : "custom");
-        // scanf("%s", cmd);
-        fgets(cmd, sizeof(cmd), stdin);
-        cmd[strlen(cmd) - 1] = '\0';
-        if(strcmp(cmd, "") == 0) continue;
+    
+    printf("%s with %s: ", dir, *mod == basic ? "basic" : "custom");
+    // scanf("%s", cmd);
+    fgets(cmd, sizeof(cmd), stdin);
+    cmd[strlen(cmd) - 1] = '\0';
+    trim(cmd, cmd);
+    if(strcmp(cmd, "") == 0) return 0;
 
-        ncount = separate(&mod, cmd, nseparated, escapes[mod][next]);
-        printf("count : %d\n", ncount);
-        for(i = 0; i < ncount; i++){
-            printf("%s\n", nseparated[i]);
-            cmdcount = separate(&mod, nseparated[i], cmdseparated, escapes[mod][then]);
+    ncount = separate(mod, cmd, nseparated, escapes[*mod][next]);
+    // printf("count : %d\n", ncount);
+    for(i = 0; i < ncount; i++){
+        // printf("B%s\n", nseparated[i]);
+        trim(nseparated[i], nseparated[i]);
+        // printf("%s\n", nseparated[i]);
+        cmdcount = separate(mod, nseparated[i], cmdseparated, escapes[*mod][then]);
 
-            printf("cmds : %d\n", cmdcount);
-            for(j = 0; j < cmdcount; j++){
-                tokcount = interpret(&mod, cmdseparated[j], dir, interpreted, fd);
-                printf("in : %d out : %d\n", fd[STDIN_FILENO], fd[STDOUT_FILENO]);
-                printf("interpreted : ");
-                for(int k = 0; k < tokcount; k++)
-                    printf("%s ", interpreted[k]);
-                printf("\n");
-                exec(interpreted, fd);
-                //TODO
-            }
-            printf("TOK : %d\n", tokcount);
+        // printf("cmds : %d\n", cmdcount);
+        for(j = 0; j < cmdcount; j++){
+            trim(cmdseparated[j], cmdseparated[j]);
+            tokcount = interpret(mod, cmdseparated[j], dir, interpreted, fd);
+            // printf("in : %d out : %d\n", fd[STDIN_FILENO], fd[STDOUT_FILENO]);
+            // printf("interpreted : ");
+            // for(int k = 0; k < tokcount; k++)
+            //     printf("I%s ", interpreted[k]);
+            // printf("\n");
+            status = exec(interpreted, fd);
+            //TODO
         }
+        // printf("TOK : %d\n", tokcount);
     }
     return status;
 }
@@ -79,13 +80,13 @@ int load(){
 }
 
 int main(void){
-    int status = 0;
+    int status = 0, mod = basic;
 
     if(load() < 0){
         fprintf(stderr, "Load error\n");
         exit(1);
     }
-
-    status = input();
+    while(status >= 0)
+        status = input(&mod);
     return status;
 }
