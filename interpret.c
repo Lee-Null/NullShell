@@ -77,8 +77,10 @@ int interpret(int *mod, char *cmds, char *dir, char **tok, int *fds){
     // printf("TOKKEN : ");
     fds[STDIN_FILENO] = STDIN_FILENO;
     fds[STDOUT_FILENO] = STDOUT_FILENO;
+    // printf("input : %s\n", cmds);
     cache = strtok(cmds, " ");
     while(cache != NULL){
+        // printf("before escape : %s\n", cache);
         switch (flag = escape(mod, cache)){
             case into:
                 file = strtok(NULL, " ");

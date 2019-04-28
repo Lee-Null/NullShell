@@ -5,6 +5,7 @@
 
 #include "shell.h"
 #include "interpret.h"
+#include "util.h"
 
 char dir[PATH_SIZE];
 
@@ -19,6 +20,7 @@ int input(){
     int i = 0, j = 0;
     int mod = basic;
     while(status){
+        ncount = 0; cmdcount = 0; tokcount = 0;
         printf("%s with %s: ", dir, mod == basic ? "basic" : "custom");
         // scanf("%s", cmd);
         fgets(cmd, sizeof(cmd), stdin);
@@ -31,8 +33,9 @@ int input(){
             printf("%s\n", nseparated[i]);
             cmdcount = separate(&mod, nseparated[i], cmdseparated, escapes[mod][then]);
 
+            printf("cmds : %d\n", cmdcount);
             for(j = 0; j < cmdcount; j++){
-                tokcount = interpret(&mod, cmdseparated[i], dir, interpreted, fd);
+                tokcount = interpret(&mod, cmdseparated[j], dir, interpreted, fd);
                 printf("in : %d out : %d\n", fd[STDIN_FILENO], fd[STDOUT_FILENO]);
                 printf("interpreted : ");
                 for(int k = 0; k < tokcount; k++)
