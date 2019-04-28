@@ -9,6 +9,13 @@
 
 char dir[PATH_SIZE];
 
+/**
+ * Fuction: input
+ * --------------
+ * get inputs from user.
+ * 
+ * return : 0 if no error otherwise if error.
+*/
 int input(){
     char cmd[INPUT_SIZE];
     char *nseparated[INPUT_SIZE/CMD_SIZE];
@@ -50,6 +57,11 @@ int input(){
     return status;
 }
 
+/**
+ * Fuction: load
+ * --------------
+ * load the settings.
+*/
 int load(){
     getcwd(dir, sizeof(dir));
 
