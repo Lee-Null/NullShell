@@ -7,14 +7,14 @@ Building Shell project
 ## How to Build
 
 1. Download this repository  
-'''
+```
 $ git clone https://github.com/Lee-Null/NullShell.git
-'''
+```
 
 2. Build the project  
-'''
+```
 $ make
-'''
+```
 
 ## Supported Feature
 
